@@ -2,7 +2,6 @@ import os
 import pdb 
 import torch
 import torch.nn as nn 
-from pytorch_metric_learning.losses import NTXentLoss
 from transformers import BertForMaskedLM, BertTokenizer, BertForPreTraining
 
 def mask_tokens(inputs, tokenizer, not_mask_pos=None):
@@ -51,11 +50,11 @@ def mask_tokens(inputs, tokenizer, not_mask_pos=None):
     # The rest of the time (10% of the time) we keep the masked input tokens unchanged
     return inputs.cuda(), labels.cuda()
 
-class BaikePretrain(nn.Module):
+class TextPretrain(nn.Module):
     """Pre-training model.
     """
     def __init__(self, args):
-        super(BaikePretrain, self).__init__()
+        super(TextPretrain, self).__init__()
         self.model = BertForMaskedLM.from_pretrained('bert-base-chinese')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
         self.args = args 
@@ -66,96 +65,42 @@ class BaikePretrain(nn.Module):
         mask = mask.view(-1, self.args.max_length)
 
         m_input, m_labels = mask_tokens(input.cpu(), self.tokenizer)
-        m_outputs = self.model(input_ids=m_input, masked_lm_labels=m_labels, attention_mask=mask)
+        m_outputs = self.model(input_ids=m_input, labels=m_labels, attention_mask=mask)
         m_loss = m_outputs[0]
 
         return m_loss, 0
 
 
-class CP(nn.Module):
-    """Contrastive Pre-training model.
-    This class implements `CP` model based on model `BertForMaskedLM`. And we 
-    use NTXentLoss as contrastive loss function.
-    Attributes:
-        model: Model to train.
-        tokenizer: Tokenizer.
-        ntxloss: Contrastive loss function.
-        args: Args from command line. 
-    """
+class KAST(nn.Module):
     def __init__(self, args):
-        super(CP, self).__init__()
+        super(KAST, self).__init__()
         self.model = BertForMaskedLM.from_pretrained('bert-base-chinese')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        self.ntxloss = NTXentLoss(temperature=args.temperature)
-        self.fc = nn.Linear(768, 768)
-        self.relu = nn.ReLU()
-        self.args = args 
+        self.loss = nn.BCEWithLogitsLoss(reduction="none")
+        self.args = args
+        self.fc = nn.Linear(768, 1)
     
-    def forward(self, input, mask, label):
-        # masked language model loss
-        input = input.view(-1, self.args.max_length)
-        mask = mask.view(-1, self.args.max_length)
-        label = label.view(-1) # (batch_size * 2)
-
-        # Ensure that `mask_tokens` function doesn't mask entity mention.
-        #not_mask_pos = torch.zeros((input.size()[0], input.size()[1]), dtype=int)
-        #not_mask_pos[:,1] = 1
-        #not_mask_pos[:,1] = 1
-
-        m_input, m_labels = mask_tokens(input.cpu(), self.tokenizer)
-        m_outputs = self.model(input_ids=m_input, masked_lm_labels=m_labels, attention_mask=mask)
+    def forward(self, input, mask, triple_mask, triple_label):
+        """
+            input: (batch, max_length)
+            mask: (batch, max_length)
+            triple_mask: (batch, max_length)
+            triple_label: (batch, max_length)
+        """
+        # masked language model loss 
+        m_input, m_labels = mask_tokens(input.cpu(), self.tokenizer, triple_mask.cpu())
+        m_outputs = self.model(input_ids=m_input, labels=m_labels, attention_mask=mask)
         m_loss = m_outputs[0]
+
+        # pdb.set_trace()
 
         outputs = m_outputs
+        state = outputs[2]  # (batch, max_length, hidden_size)
+        logits = self.fc(state).squeeze(2)  # (batch, max_length)
 
-        # entity marker starter
-        state = outputs[2][:, 0, :] # (batch, max_length, hidden_size)
-        state = self.relu(self.fc(state))
-        r_loss = self.ntxloss(state, label)
-
-        return m_loss, r_loss
-
-class CLF(nn.Module):
-    def __init__(self, args):
-        super(CLF, self).__init__()
-        self.model = BertForMaskedLM.from_pretrained('bert-base-chinese')
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        self.loss = nn.CrossEntropyLoss()
-        self.fc = nn.Linear(768, 58) ############## !!!!!!!!!!!!!! 
-        self.args = args 
-    
-    def forward(self, input, mask, label):
-        m_input, m_labels = mask_tokens(input.cpu(), self.tokenizer)
-        m_outputs = self.model(input_ids=m_input, masked_lm_labels=m_labels, attention_mask=mask)
-        m_loss = m_outputs[0]
-
-        outputs = m_outputs
-
-        # entity marker starter
-        state = outputs[2][:, 0, :] # (batch, max_length, hidden_size)
-        logits = self.fc(state)     # (batch, rel_num)
-        r_loss = self.loss(logits, label)
-
-        return m_loss, r_loss
-
-class CAE(nn.Module):
-    def __init__(self, args):
-        super(CAE, self).__init__()
-        self.model = BertForPreTraining.from_pretrained('bert-base-chinese')
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        self.args = args 
-    
-    def forward(self, input, mask, label):
-        input = input.view(-1, self.args.max_length)
-        mask = mask.view(-1, self.args.max_length)
-        label = label.view(-1) # (batch_size * bag_size)
-
-        m_input, m_labels = mask_tokens(input.cpu(), self.tokenizer)
-        m_outputs = self.model(input_ids=m_input, labels=m_labels, attention_mask=mask, next_sentence_label=label)
-        m_loss = m_outputs[0]
+        # loss = self.loss(logits, triple_label)  # (batch, max_length)
+        # loss = loss * triple_mask
+        # loss = loss.sum(-1) / (triple_mask.sum(-1) + 1e-6)
+        # loss = loss.mean()
 
         return m_loss, 0
-
-
-
-

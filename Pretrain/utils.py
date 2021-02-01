@@ -21,18 +21,32 @@ class EntityMarker():
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
         self.args = args
 
-    def get_sepid(self):
-        return self.tokenizer.convert_tokens_to_ids(["[SEP]",])[0]
+    def tokenize(self, text):
+        tokens = ['[CLS]',]
+        tokens.extend(self.tokenizer.tokenize(text))
+        tokens.append('[SEP]')
+        return self.tokenizer.convert_tokens_to_ids(tokens)
+    
+    def tokenize_KAST_text(self, text):
+        tokens = ['[CLS]',]
+        tokens.extend(self.tokenizer.tokenize(text))
+        return self.tokenizer.convert_tokens_to_ids(tokens)
 
-    def tokenize(self, raw_text, special_id=None):
-        if special_id is not None:
-            return self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(raw_text)+["[unused%d]"%(special_id+10)])
-        return self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(raw_text))
+    def tokenize_KAST_triple(self, h, r, t):
+        tokens = ['[SEP]',]
+        tokens.extend(self.tokenizer.tokenize(h))
+        tokens.extend(self.tokenizer.tokenize(r))
+        tokens.extend(self.tokenizer.tokenize(t))
+        return self.tokenizer.convert_tokens_to_ids(tokens)
+    
+    def tokenize_KAST_title(self, title):
+        tokens = ['[SEP]',]
+        tokens.extend(self.tokenizer.tokenize(title))
+        return self.tokenizer.convert_tokens_to_ids(tokens)
 
-    def tokenize_CLF(self, entity, text):
-        entity = self.tokenizer.tokenize(entity)
-        text = self.tokenizer.tokenize(text)
-        return self.tokenizer.convert_tokens_to_ids(entity + ["[SEP]",] + text)
+    
+
+
 
 
         

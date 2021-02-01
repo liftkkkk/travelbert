@@ -8,28 +8,31 @@ import pdb
 import random 
 import torch 
 import numpy as np 
+from tqdm import tqdm 
 from torch.utils import data
 from utils import EntityMarker
+from collections import defaultdict
+import copy
 
-
-class BaikeDataset(data.Dataset):
+class TextDataset(data.Dataset):
     """Data loader for Baike Dataset.
     """
     def __init__(self, path, args):
         # load raw data
-        data = json.load(open(os.path.join(path, "baikedata.json"))) 
-        # attr2id = json.load(open(os.path.join(path, "rel2id.json")))
-                   
+        f = open(os.path.join(path, "data.txt"))
+        data = f.readlines()
+        f.close()
+        
         # tokenize
         entityMarker = EntityMarker(args)
         tot_instance = len(data)
 
         # pre process data
         self.input_ids = np.zeros((tot_instance, args.max_length), dtype=int)
-        self.mask = np.zeros((tot_instance, args.max_length), dtype=int) 
+        self.mask = np.zeros((tot_instance, args.max_length), dtype=float) 
 
-        for i, ins in enumerate(data):
-            ids = entityMarker.tokenize(ins)
+        for i, ins in enumerate(tqdm(data)):
+            ids = entityMarker.tokenize(ins.strip())
             length = min(len(ids), args.max_length)
             self.input_ids[i][0:length] = ids[0:length]
             self.mask[i][0:length] = 1
@@ -41,237 +44,97 @@ class BaikeDataset(data.Dataset):
         input_ids = self.input_ids[index]
         mask = self.mask[index]
 
-        return input_ids, mask
+        return torch.tensor(input_ids, dtype=torch.long), torch.tensor(mask, dtype=torch.float32)
 
-
-class CPDataset(data.Dataset):
-    """Overwritten class Dataset for model CP.
-    This class prepare data for training of CP.
-    """
+class KASTDataset(data.Dataset):
     def __init__(self, path, args):
-        """Inits tokenized sentence and positive pair for CP.
-        
-        Args:
-            path: path to your dataset.
-            args: args from command line.
-        
-        Returns:
-            No returns
-        
-        Raises:
-            If the dataset in `path` is not the same format as described in 
-            file 'prepare_data.py', there may raise:
-                - `key nor found`
-                - `integer can't be indexed`
-                and so on.
-        """
-        self.path = path 
         self.args = args 
-        data = json.load(open(os.path.join(path, "cpdata.json")))
-        rel2scope = json.load(open(os.path.join(path, "rel2scope.json")))
-        attr2id = json.load(open(os.path.join(path, "rel2id.json")))
-        entityMarker = EntityMarker(args)
-
-        self.tokens = np.zeros((len(data), args.max_length), dtype=int)
-        self.mask = np.zeros((len(data), args.max_length), dtype=int)
-        self.label = np.zeros((len(data)), dtype=int)
-
-        # Distant supervised label for sentence.
-        # Sentences whose label are the same in a batch 
-        # is positive pair, otherwise negative pair.
-        for i, rel in enumerate(rel2scope.keys()):
-            scope = rel2scope[rel]
-            for j in range(scope[0], scope[1]):
-                self.label[j] = i
-
-        for i, sentence in enumerate(data):
-            attrid = attr2id[sentence['attr']]
-            ids = entityMarker.tokenize(sentence["value"], attrid)
-            length = min(len(ids), args.max_length)
-            self.tokens[i][:length] = ids[:length]
-            self.mask[i][:length] = 1
-        self.__sample__()
-    
-    def __pos_pair__(self, scope):
-        """Generate positive pair.
-        Args:
-            scope: A scope in which all sentences' label are the same.
-                scope example: [0, 12]
-        Returns:
-            all_pos_pair: All positive pairs. 
-            ! IMPORTTANT !
-            Given that any sentence pair in scope is positive pair, there
-            will be totoally (N-1)N/2 pairs, where N equals scope[1] - scope[0].
-            The positive pair's number is proportional to N^2, which will cause 
-            instance imbalance. And If we consider all pair, there will be a huge 
-            number of positive pairs.
-            So we sample positive pair which is proportional to N. And in different epoch,
-            we resample sentence pair, i.e. dynamic sampling.
-        """
-        pos_scope = list(range(scope[0], scope[1]))
-        
-        # shuffle bag to get different pairs
-        random.shuffle(pos_scope)   
-        all_pos_pair = []
-        bag = []
-        for i, index in enumerate(pos_scope):
-            bag.append(index)
-            if (i+1) % 2 == 0:
-                all_pos_pair.append(bag)
-                bag = []
-        return all_pos_pair
-    
-    def __sample__(self):
-        """Samples positive pairs.
-        After sampling, `self.pos_pair` is all pairs sampled.
-        `self.pos_pair` example: 
-                [
-                    [0,2],
-                    [1,6],
-                    [12,25],
-                    ...
-                ]
-        """
-        rel2scope = json.load(open(os.path.join(self.path, "rel2scope.json")))
-        self.pos_pair = []
-        for rel in rel2scope.keys():
-            scope = rel2scope[rel]
-            pos_pair = self.__pos_pair__(scope)
-            self.pos_pair.extend(pos_pair)
-
-        print("Postive pair's number is %d" % len(self.pos_pair))
-
-    def __len__(self):
-        """Number of instances in an epoch.
-        
-        Overwitten function.
-        """
-        return len(self.pos_pair)
-
-    def __getitem__(self, index):
-        """Get training instance.
-        Overwitten function.
-        
-        Args:
-            index: Instance index.
-        
-        Return:
-            input: Tokenized word id.
-            mask: Attention mask for bert. 0 means masking, 1 means not masking.
-            label: Label for sentence.
-            h_pos: Position of head entity.
-            t_pos: Position of tail entity.
-        """
-        bag = self.pos_pair[index]
-        input = np.zeros((self.args.max_length * 2), dtype=int)
-        mask = np.zeros((self.args.max_length * 2), dtype=int)
-        label = np.zeros((2), dtype=int)
-
-        for i, ind in enumerate(bag):
-            input[i*self.args.max_length : (i+1)*self.args.max_length] = self.tokens[ind]
-            mask[i*self.args.max_length : (i+1)*self.args.max_length] = self.mask[ind]
-            label[i] = self.label[ind]
-
-        return input, mask, label
-
-class CLFDataset(data.Dataset):
-    def __init__(self, path, args):
         self.path = path 
-        self.args = args 
-        data = json.load(open(os.path.join(path, "clfdata.json")))
-        rel2id = json.load(open(os.path.join(path, "rel2id.json")))
-        entityMarker = EntityMarker(args)
+        self.entityMarker = EntityMarker(args)
+        data = json.load(open(os.path.join(path, "kastdata.json")))
+        ent2titles = json.load(open(os.path.join(path, "ent2titles.json")))
+        relation = json.load(open(os.path.join(path, "relations.json")))
 
-        self.tokens = np.zeros((len(data), args.max_length), dtype=int)
-        self.mask = np.zeros((len(data), args.max_length), dtype=int)
-        self.label = np.zeros((len(data)), dtype=int)
+        self.text_tokens = np.zeros((len(data), args.max_length), dtype=int)
+        self.text_length = np.zeros((len(data)), dtype=int)
 
-        for i, sentence in enumerate(data):
-            relid = rel2id[sentence['attr']]
-            ids = entityMarker.tokenize_CLF(sentence['ent'], sentence["value"]) # [ENTITY] + [attribute value]
+        for i, item in enumerate(tqdm(data, desc="Process text data")):
+            text = item['text']
+            ids = self.entityMarker.tokenize_KAST_text(text)
             length = min(len(ids), args.max_length)
-            self.tokens[i][:length] = ids[:length]
-            self.mask[i][:length] = 1
-            self.label[i] = relid
+            self.text_tokens[i][:length] = ids[:length]
+            self.text_length[i] = length
+        
+        self.data = data  
+        self.ent2titles = ent2titles
+        self.relation = relation
     
     def __len__(self):
-        """Number of instances in an epoch.
-        
-        Overwitten function.
-        """
-        return len(self.tokens)
+        return len(self.text_length)
+
+    def sample_triple(self, index):
+        triples = self.data[index]['triples']
+        # if no triples
+        if len(triples) == 0:
+            return []
+        # sample triple 
+        triple_tensor = []
+        for triple in triples:
+            h, r, t = triple[0], triple[1], triple[2]
+            if random.random() < self.args.p_neg: # negative sample
+                r_neg = random.sample(self.relation, 1)[0]
+                triple_tensor.append([self.entityMarker.tokenize_KAST_triple(h, r_neg, t), 0])
+            else:
+                triple_tensor.append([self.entityMarker.tokenize_KAST_triple(h, r, t), 1])
+        return triple_tensor
+    
+    def sample_title(self, index):
+        doc = self.data[index]
+        # sample title
+        titles = copy.deepcopy(self.ent2titles[doc['ent']])
+        titles.remove(doc['title'])
+        if random.random() < self.args.p_neg and len(titles) >= 1:
+            return self.entityMarker.tokenize_KAST_title(random.sample(titles, 1)[0]), 0
+        else:
+            return self.entityMarker.tokenize_KAST_title(doc['title']), 1
 
     def __getitem__(self, index):
-        input = self.tokens[index]
-        mask = self.mask[index]
-        label = self.label[index]
+        max_length = 512
+        triples = self.sample_triple(index)
+        begin = self.text_length[index]
 
-        return input, mask, label
+        input_ids = np.zeros((max_length), dtype=int)
+        mask = np.zeros((max_length), dtype=float)
+        triple_label = np.zeros((max_length), dtype=float)
+        triple_mask = np.zeros((max_length), dtype=float)
 
-class CAEDataset(data.Dataset):
-    def __init__(self, path, args):
-        self.path = path
-        self.args = args
-        data = json.load(open(os.path.join(path, "caedata.json")))
-        self.ins2scope = json.load(open(os.path.join(path, "ins2scope.json")))
-        entityMarker = EntityMarker(args)
+        # set text data
+        input_ids[:begin] = self.text_tokens[index][:begin]
+        mask[:begin] = 1
 
-        self.txt_tokens = np.zeros((len(data), args.max_length), dtype=int)
-        self.ent_tokens = np.zeros((len(data), args.max_length), dtype=int)
-        self.sepid = entityMarker.get_sepid()
-        self.ent_len = np.zeros((len(data),), dtype=int)
-        self.txt_len = np.zeros((len(data),), dtype=int)
+        # set title
+        # title_ids, title_label = self.sample_title(index)
+        # end = min(len(title_ids) + begin, max_length)
+        # input_ids[begin:end] = title_ids[:end-begin]
+        # mask[begin:end] = 1
+        # triple_label[begin] = title_label
+        # triple_mask[begin] = 1
+        # begin = end
 
-        for i, sentence in enumerate(data):
-            ent_ids = entityMarker.tokenize(sentence['ent'])
-            ent_len = min(len(ent_ids), args.max_length)
-            self.ent_tokens[i][:ent_len] = ent_ids[:ent_len]
-            self.ent_len[i] = ent_len
-            
-            txt_ids = entityMarker.tokenize(sentence['text'][:args.max_length])
-            txt_len = min(len(txt_ids), args.max_length)
-            self.txt_tokens[i][:txt_len] = txt_ids[:txt_len]
-            self.txt_len[i] = txt_len
+        # set triples
+        # for triple in triples:
+        #     end = min(len(triple[0]) + begin, max_length)
+        #     input_ids[begin:end] = triple[0][:end-begin]
+        #     mask[begin:end] = 1 
+        #     triple_label[begin] = triple[1]
+        #     triple_mask[begin] = 1
+        #     begin = end
+        #     if begin >= max_length:
+        #         break
+    
+        return torch.tensor(input_ids, dtype=torch.long), torch.tensor(mask, dtype=torch.float32), \
+                torch.tensor(triple_mask, dtype=torch.float32), torch.tensor(triple_label, dtype=torch.float32)
         
-        self.__sample__()
 
-    def __sample__(self):
-        self.bag = [] # (pos, neg, ..., neg)
-        for i in range(self.txt_tokens.shape[0]):
-            scope = list(range(self.ins2scope[i][0], self.ins2scope[i][1]))
-            scope.remove(i)
-            
-            sample_num = self.args.bag_size - 1
-            extra_add = sample_num - len(scope)
-            if extra_add > 0:
-                print("This scope is too small!")
-                scope += [0, self.ins2scope[i][0]]
-
-            neg_list = random.sample(scope, sample_num)
-            self.bag.append([i,]+neg_list)
-    
-    def __len__(self):
-        return len(self.bag)
-    
-    def __getitem__(self, index):
-        bag = self.bag[index]
-        input = np.zeros((self.args.max_length * self.args.bag_size), dtype=int)
-        mask = np.zeros((self.args.max_length * self.args.bag_size), dtype=int)
-        label = np.zeros((self.args.bag_size), dtype=int)
-
-        txtid = bag[0]
-        for i, ind in enumerate(bag):
-            ent_end = i*self.args.max_length+self.ent_len[ind]
-
-            input[i*self.args.max_length : ent_end] = self.ent_tokens[ind][:self.ent_len[ind]] 
-            input[ent_end : ent_end+1] = self.sepid
-
-            length = min(self.txt_len[txtid], (i+1)*self.args.max_length-(ent_end+1))
-            input[ent_end+1 : ent_end+1+length] = self.txt_tokens[txtid][:length]
-            mask[i*self.args.max_length : ent_end+1+length] = 1
-
-            label[i] = 0 if i == 0 else 1
-
-        return input, mask, label
 
 

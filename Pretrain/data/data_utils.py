@@ -1,127 +1,125 @@
+# -*- coding: utf-8 -*-
 import os 
+import re 
 import pdb
 import sys  
 import csv 
 import json 
+import jieba
+import codecs
+import time
+import numpy as np
+from tqdm import tqdm
 from collections import defaultdict
 
+# stop words
+def get_stopwords_dict():
+    f = open("KAST/cn_stopwords.txt")
+    stopwords = {}
+    for line in f.readlines():
+        stopwords[line.strip()] = len(stopwords)
+    stopwords['（'] = len(stopwords)
+    stopwords['）'] = len(stopwords)
+    return stopwords
 
-def convert_rawdata_to_list(path):
-    rawdata = json.load(open(path))
-    listdata = []
-    MIN_LENGTH = 6
-    print("We will filter %d documents" % len(rawdata))
-    step = 0
-    tot_length = 0
-    for ins in rawdata:
-        sens = ins['text'].strip().split("。")
-        for sen in sens:
-            sen = sen.strip()
-            if len(sen) < MIN_LENGTH:
-                continue
-            listdata.append(sen)
-            tot_length += len(sen)
-        step += 1
-        sys.stdout.write("%d processed\r" % step)
-        sys.stdout.flush()
-    print("Processed. We get %d sentences" % len(listdata))
-    print("Avg length: %.3f" % (tot_length / len(listdata)))
-    json.dump(listdata, open("baike_sentence.json", 'w'))
+STOPWORDS = get_stopwords_dict()
 
-"""
-Extract data from csv files.
-"""
-def parse_csv(filepath, type):
-    f = open(filepath)
-    csv_data = list(csv.reader(f))
-    print("%d lines loaded." % len(csv_data))
-    
-    ent2name = {} 
-    attrs = set()
-    data = []
-    for triple in csv_data[1:]:
-        value = triple[2]
-        if value[:4] == "http":
+def filter_stopwords(tokens):
+    result = []
+    for t in tokens:
+        if STOPWORDS.get(t, -1) != -1:
             continue
-        ent = triple[0].split("/")[-1]
-        attr = triple[1].split("/")[-1].split("#")[-1]
-        if attr == "ChineseName" or attr == "Name":
-            ent2name[ent] = value
-        item = {'attr': attr, 'value': value, "ent": ent, "type": type}
-        data.append(item)
-        attrs.add(attr)
-    noname = 0
-    for item in data:
-        if item['ent'] in ent2name:
-            item['ent'] = ent2name[item['ent']]
-        else:
-            noname += 1
+        if t.isdigit():
+            continue
+        result.append(t) 
+    return result
 
-    print("%d triples has been generated, %d has no entity name" % (len(data), noname))
-    return data, attrs
+def jaccard(s1, s2):
+    # s1 = set(s1)
+    # s2 = set(s2)
+    # ret1 = s1.intersection(s2)
+    # ret2 = s1.union(s2)
+    # return len(ret1)/ len(ret2)
+    s1 = set(s1)
+    count = 0
+    for t in s1:
+        if t in s2:
+            count += 1
+    return count / (len(s1) + 1e-10)
 
-"""
-"""
-def process_data_for_CP(data):            
-    washed_data = {}
-    for key in data.keys():
-        if len(data[key]) < 2:
-            continue        
-        washed_data[key] = data[key]
+def topk(a, k):
+    return sorted(range(len(a)), key=lambda i: a[i])[-k:]
 
-    ll = 0
-    rel2scope = {}
-    list_data = []
-    for key in washed_data.keys():
-        list_data.extend(washed_data[key])
-        rel2scope[key] = [ll, len(list_data)]
-        ll = len(list_data)
+def select_triples(triples, text):
+    scores = []
+    for triple in triples:
+        s1 = filter_stopwords(list(jieba.cut(''.join(triple))))
+        s2 = text
+        scores.append(jaccard(s1, s2))  
+
+    result = []
+    for i, score in enumerate(scores):
+        if score > 0.3:
+            result.append(triples[i])
+    return result
+
+def process_data_for_KAST(textfile, triplefile):
+    ss_text = open(textfile)
+    # process triples
+    relations = set()
+    tf = open(triplefile)
+    ent2triples = defaultdict(list)
+    for line in tf.readlines():
+        items = line.strip().split('\t\t')
+        ent = items[0]
+        try:
+            triples = json.loads(items[-1])
+        except:
+            continue
+        for r, t in triples.items():
+            if '中文名' in r:
+                continue
+            if [r, t] not in ent2triples[ent]:
+                ent2triples[ent].append([r, t])
+            relations.add(r)
     
-    if not os.path.exists("CP"):
-        os.mkdir("CP")
-    print("%d items saved" % len(list_data))
-    json.dump(list_data, open("CP/cpdata.json","w"))
-    json.dump(rel2scope, open("CP/rel2scope.json", 'w'))
+    ent2titles = defaultdict(list)
+    textdata = [] # list of {'text': 故宫..., 'triples': [], 'title': [], 'ent': 北京故宫}
+    for line in tqdm(ss_text.readlines()):
+        item = json.loads(line.strip())
+        ent = item['header'].split('\t\t')[0]
+        for title_text in item['text']:
+            # set title
+            title = title_text['title']
+            ent2titles[ent].append(title)
+            # loop for text
+            for text in title_text['content']:
+                instance = {
+                    'text': text,
+                    'triples': [],
+                    'title': title,
+                    'ent': ent
+                }
+                # if this entity don't have triple
+                if ent2triples.get(ent, -1) == -1 or len(ent2triples.get(ent, -1)) == 0:
+                    textdata.append(instance)
+                    continue 
 
-
-"""
-Process data for comparsion abstract and entity
-"""
-def process_data_for_CAE(data):
-    data.sort(key=lambda x: x['type'])
-    type2scope = {}
-    last_type = ""
-    for i, item in enumerate(data):
-        if item['type'] != last_type:
-            if i == 0:
-                type2scope[item["type"]] = [i,]
-            else:
-                type2scope[last_type].append(i)
-                type2scope[item["type"]] = [i, ]
-            last_type = item['type']
-    type2scope[last_type].append(len(data))
-
-    ins2scope = []
-    for i, item in enumerate(data):
-        ins2scope.append(type2scope[item['type']])
+                # process triple
+                rts = select_triples(ent2triples[ent], text)
+                for rt in rts:
+                    instance['triples'].append([ent, rt[0], rt[1]])
+                textdata.append(instance)
     
-    print(type2scope)
-    json.dump(data,open("CAE/caedata.json", "w"))
-    json.dump(ins2scope, open("CAE/ins2scope.json", 'w'))
+    for ent in ent2titles.keys():
+        ent2titles[ent] = list(set(ent2titles[ent]))
 
+    json.dump(textdata, open("KAST/kastdata.json", 'w'))
+    json.dump(ent2titles, open("KAST/ent2titles.json", 'w'))
+    json.dump(list(relations), open("KAST/relations.json", 'w'))
 
 
 if __name__ == "__main__":
-    # all_attr, all_data = [], []
-    # files = os.listdir("csvdata")
-    # for i, file in enumerate(files):
-    #     if file.endswith(".csv"):
-    #         data, attr = parse_csv(os.path.join("csvdata", file), file.split("_")[0])    
-    #         all_data.extend(data)
-    #         all_attr.extend(list(attr))
-    # all_attr = list(set(all_attr))
-    # print("%d attributes has been saved" % len(all_attr))
-    # print("%d triples has been saved" % len(all_data))
-    # json.dump(all_attr, open("csvdata/attributes.json", 'w'))
-    # json.dump(all_data, open("csvdata/triples.json", 'w'))
-    
+    process_data_for_KAST("KAST/semi-structured.txt", "KAST/baidubd_infobox.txt.clean.txt")
+
+
