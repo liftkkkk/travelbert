@@ -1,13 +1,11 @@
-# Multimodal Chinese Tourism KG
+# Chinese Tourism KG
 
 [SPARQL endpoint](http://166.111.68.66:8891/sparql)
 
-[WEBSITE](http://166.111.68.66:8083)
-
-jingdian
+Attraction
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?t rdfs:subClassOf* <http://travel.org/景点> .
 ?s a ?t .
@@ -16,10 +14,10 @@ where {
 } limit 10000
 ```
 
-pinpai
+Brand
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?t rdfs:subClassOf* <http://travel.org/品牌> .
 ?t rdfs:label ?c .
@@ -28,50 +26,50 @@ where {
 } limit 10000
 ```
 
-person
+Person
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?s a <http://travel.org/人物> .
 ?s <http://travel.org/ChineseName> ?c
 } limit 100
 ```
 
-wenwu
+Relic
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?s a <http://travel.org/文物> .
 ?s <http://travel.org/ChineseName> ?c
 } limit 1000
 ```
 
-building
+Building
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?s a <http://travel.org/建筑> .
 ?s <http://travel.org/ChineseName> ?c
 } limit 1000
 ```
 
-institution
+Organization
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?s a <http://travel.org/组织机构> .
 ?s <http://travel.org/ChineseName> ?c
 } limit 1000
 ```
 
-dishes
+Dishes
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where {
 ?s a <http://travel.org/菜品> .
 ?s <http://travel.org/Name> ?c
@@ -85,7 +83,7 @@ Cannot use multiple transitions under multiple unions
 Retrieve up to 10,000 results each time
 ```SPARQL
 select distinct ?c
-from <travel2>
+from <travel7>
 where{
 {?t rdfs:subClassOf* <http://travel.org/景点> .
 ?s a ?t .
@@ -115,7 +113,7 @@ union
 Attributes of each entity
 ```SPARQL
 select distinct ?s ?p ?o
-from <travel2>
+from <travel7>
 where {
 ?t rdfs:subClassOf* <http://travel.org/景点> .
 ?s a ?t .
@@ -132,7 +130,7 @@ limit 10000
 
 ```SPARQL
 select distinct ?s ?o ?p ?os
-from <travel2>
+from <travel7>
 where {
 ?t rdfs:subClassOf* <http://travel.org/品牌> .
 ?s a ?t .

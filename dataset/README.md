@@ -2,7 +2,7 @@
 
 ## 预训练语料更新
 
-### SCI-bert语料
+### 纯文本语料
 [v2021014纯净无噪版400token长度消除english-全国景点-旅游攻略+百度正文+摘要-纯文本语料库（sci-bert训练）](https://cloud.tsinghua.edu.cn/f/38fe0a8ed7b645918ccf/?dl=1)
 
 数据量：2.79亿token
@@ -35,7 +35,7 @@
 
 [v20201224全国景点-旅游攻略-纯文本语料库](https://cloud.tsinghua.edu.cn/f/2e6382c3bc914b098866/?dl=1)
 
-### KAST语料
+### HKLM语料
 [v20210112-纯净无噪音版400token长度-全国景点加入content-table（kast训练）](https://cloud.tsinghua.edu.cn/f/3d72f657cda345cab8ff/?dl=1)
 
 数据格式

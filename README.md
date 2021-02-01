@@ -9,9 +9,12 @@
 [KG entities](./dataset)
 
 ## Evaluation dataset
+Datasets can be downloaded from [Baidu Cloud](https://pan.baidu.com/s/1mAifK3z9YRx_QiXUjxAWNg)
+```
+password: 1iwa
+```
 
-
-## Multimodal Chinese Tourism KG
+## Chinese Tourism KG
 
 [link](./Tourism-KG)
 
