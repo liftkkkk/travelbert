@@ -12,8 +12,6 @@ class KnowledgeProbing(nn.Module):
     def __init__(self):
         super(KnowledgeProbing, self).__init__()
         self.model = BertForMaskedLM.from_pretrained('bert-base-chinese')
-        # self.model.bert.load_state_dict(torch.load("/home/penghao/tourism-pretrain/ckpt/kast/ckpt_of_step_90000"))
-        # self.model.bert.load_state_dict(torch.load("/home/penghao/tourism-pretrain/ckpt/text/ckpt_of_step_100000"))
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
     
     def tokenize(self, text):
