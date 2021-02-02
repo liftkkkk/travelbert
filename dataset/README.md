@@ -36,7 +36,7 @@
 [v20201224全国景点-旅游攻略-纯文本语料库](https://cloud.tsinghua.edu.cn/f/2e6382c3bc914b098866/?dl=1)
 
 ### HKLM语料
-[v20210112-纯净无噪音版400token长度-全国景点加入content-table（kast训练）](https://cloud.tsinghua.edu.cn/f/3d72f657cda345cab8ff/?dl=1)
+[v20210112-纯净无噪音版400token长度-全国景点加入content-table（hklm训练）](https://cloud.tsinghua.edu.cn/f/3d72f657cda345cab8ff/?dl=1)
 
 数据格式
 ```
@@ -44,7 +44,7 @@
 ```
 title用的是离着文本最近的一级标题，没有找到title的记作"title":"正文"。header和原来文件内容一样，景点的名字。
 
-[v20201230-12万纯净无噪音版全国景点加入content-table全都用上（kast训练）](https://cloud.tsinghua.edu.cn/f/db040d3d66754f65941b/?dl=1)
+[v20201230-12万纯净无噪音版全国景点加入content-table全都用上（hklm训练）](https://cloud.tsinghua.edu.cn/f/db040d3d66754f65941b/?dl=1)
 
 以前的百科文本包含太多噪音
 
@@ -54,7 +54,7 @@ title用的是离着文本最近的一级标题，没有找到title的记作"tit
 ```
 没有找到title的记作"title":"正文"。header和原来文件内容一样，景点的名字。
 
-[v20201222-12万全国景点加入content-table全都用上（kast训练）](https://cloud.tsinghua.edu.cn/f/df5bda40b2ef4850b71d/?dl=1)
+[v20201222-12万全国景点加入content-table全都用上（hklm训练）](https://cloud.tsinghua.edu.cn/f/df5bda40b2ef4850b71d/?dl=1)
 
 数据格式
 ```

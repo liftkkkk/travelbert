@@ -61,7 +61,7 @@ if __name__ == "__main__":
 	input_sentences = ["我爱北京天安门。","天安门上太阳升。"]
 	for s in input_sentences:
 		entities = entity_link_sentence(s)
-		print("============这句话包含的实体=============",s)
+		# print("============这句话包含的实体=============",s)
 		for e in entities:
 			# print(e)
 			for w in e['Instances']:

@@ -1,1 +1,6 @@
-# travelbert
+# Open IE
+
+## Usage
+```
+train.sh
+```
