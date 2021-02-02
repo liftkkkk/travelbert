@@ -10,10 +10,10 @@
 
 export MAX_LENGTH=128
 export BERT_MODEL=bert-base-chinese
-python3 scripts/preprocess.py /data1/zhy/github/tner/bio.txtl.train $BERT_MODEL $MAX_LENGTH > /data1/zhy/github/tner/train.txt
-python3 scripts/preprocess.py /data1/zhy/github/tner/bio.txtl.dev $BERT_MODEL $MAX_LENGTH > /data1/zhy/github/tner/dev.txt
-python3 scripts/preprocess.py /data1/zhy/github/tner/bio.txtl.test $BERT_MODEL $MAX_LENGTH > /data1/zhy/github/tner/test.txt
-cat /data1/zhy/github/tner/train.txt /data1/zhy/github/tner/dev.txt /data1/zhy/github/tner/test.txt | cut -d " " -f 2 | grep -v "^$"| sort | uniq > /data1/zhy/github/tner/labels.txt
+python3 scripts/preprocess.py /data1/anonymous/github/tner/bio.txtl.train $BERT_MODEL $MAX_LENGTH > /data1/anonymous/github/tner/train.txt
+python3 scripts/preprocess.py /data1/anonymous/github/tner/bio.txtl.dev $BERT_MODEL $MAX_LENGTH > /data1/anonymous/github/tner/dev.txt
+python3 scripts/preprocess.py /data1/anonymous/github/tner/bio.txtl.test $BERT_MODEL $MAX_LENGTH > /data1/anonymous/github/tner/test.txt
+cat /data1/anonymous/github/tner/train.txt /data1/anonymous/github/tner/dev.txt /data1/anonymous/github/tner/test.txt | cut -d " " -f 2 | grep -v "^$"| sort | uniq > /data1/anonymous/github/tner/labels.txt
 export OUTPUT_DIR=baseline-model
 export BATCH_SIZE=32
 export NUM_EPOCHS=20
@@ -22,8 +22,8 @@ export SEED=3
 
 CUDA_VISIBLE_DEVICES=2 python3 run_ner.py \
 --task_type NER \
---data_dir /data1/zhy/github/tner \
---labels /data1/zhy/github/tner/labels.txt \
+--data_dir /data1/anonymous/github/tner \
+--labels /data1/anonymous/github/tner/labels.txt \
 --model_name_or_path $BERT_MODEL \
 --output_dir $OUTPUT_DIR \
 --max_seq_length  $MAX_LENGTH \
