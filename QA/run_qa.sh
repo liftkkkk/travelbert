@@ -1,7 +1,7 @@
 export TASK_NAME=qnli
 export SEED=3
 
-CUDA_VISIBLE_DEVICES=5,6,4 python3 run_glue.py \
+CUDA_VISIBLE_DEVICES=5,6,4 python3 run_qa.py \
   --model_name_or_path bert-base-chinese \
   --task_name $TASK_NAME \
   --seed $SEED \

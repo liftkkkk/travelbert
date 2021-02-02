@@ -64,7 +64,7 @@ title用的是离着文本最近的一级标题，没有找到title的记作"tit
 
 ### 知识图谱实体
 
-[v20201209-12万全国景点原始数据](https://cloud.tsinghua.edu.cn/f/ad565e2bca3a42f49973/?dl=1) === [词表](utils/全国景点) === [处理之后的数据](https://cloud.tsinghua.edu.cn/f/9f42433b7bd54c789491/?dl=1)
+[v20201209-12万全国景点原始数据](https://cloud.tsinghua.edu.cn/f/ad565e2bca3a42f49973/?dl=1) === [词表](../Tourism-KG/全国景点) === [处理之后的数据](https://cloud.tsinghua.edu.cn/f/9f42433b7bd54c789491/?dl=1)
 
 原始数据格式 format_baidu.json
 ```
@@ -77,17 +77,17 @@ baidubd_abstract.txt.clean.txt 摘要
 baidubd_article.txt.clean.txt 全文
 ```
 
-[v20201126-九千实体高质量](https://cloud.tsinghua.edu.cn/f/7166f3bc2e7043b69359/?dl=1) === [下载词汇表](utils/20201126人工精细版)
+[v20201126-九千实体高质量](https://cloud.tsinghua.edu.cn/f/7166f3bc2e7043b69359/?dl=1) === [下载词汇表](../Tourism-KG/20201126人工精细版)
 
-[v20201120-KG三元组](https://cloud.tsinghua.edu.cn/f/1792b4937ff74f45a79b/?dl=1) === [词汇表](utils/第二次扩展后图谱实体)
+[v20201120-KG三元组](https://cloud.tsinghua.edu.cn/f/1792b4937ff74f45a79b/?dl=1) === [词汇表](../Tourism-KG/第二次扩展后图谱实体)
 
-[v20201109-6类实体的属性过滤下载](https://cloud.tsinghua.edu.cn/f/05a07d9f074c4e2fae91/?dl=1) === [词汇表](utils/entities)
+[v20201109-6类实体的属性过滤下载](https://cloud.tsinghua.edu.cn/f/05a07d9f074c4e2fae91/?dl=1) === [词汇表](../Tourism-KG/entities)
 
 [v20201009-8类实体的属性过滤下载](https://cloud.tsinghua.edu.cn/f/6f25b788b3d34d2fb7cf/?dl=1)
 
 [v20201006-旅游知识图谱8类实体的属性三元组下载](https://cloud.tsinghua.edu.cn/f/ebf73ffec08c4994bffc/?dl=1)
 
-[Crawler and data](utils/baike-spider/)
+[Crawler and data](../Tourism-KG/baike-spider/)
 
 
 ## 评测任务数据集更新
@@ -99,5 +99,3 @@ baidubd_article.txt.clean.txt 全文
 我持有港澳通行证但没签注，请问可以过关时在海关直接签注吗？急在线等		过关的时候海关不可能给你直接签注的，如果你是广东的卡式通行证，可以找家关口最近的自助签证大厅自助签证，一分钟搞定签注		0
 我持有港澳通行证但没签注，请问可以过关时在海关直接签注吗？急在线等		不需要，直接港澳通行证及香港签注就可以了，现在都可以自助过关，很方便，望采纳		0
 ```
-
-[NER数据集](utils/tner)
