@@ -440,9 +440,9 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length, max_segmen
 # from pytorch_pretrained_bert.tokenization import BertTokenizer
 #
 # sent_len = []
-# tokenizer = BertTokenizer.from_pretrained("/data/lzh/data/bert/bert-chinese", do_lower_case=True)
+# tokenizer = BertTokenizer.from_pretrained("data/bert/bert-chinese", do_lower_case=True)
 # processor = DataProcessor()
-# processor.read_examples_from_json("/data/lzh/data/SAOKE/dataset_json_s1/train.json")
+# processor.read_examples_from_json("data/SAOKE/dataset_json_s1/train.json")
 # # # examples = processor.get_relation_examples()
 # examples = processor.get_entity_examples()
 # print(len(processor.examples))
@@ -475,7 +475,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length, max_segmen
 # 99 112.0
 # 100 183.0
 
-# examples = processor.get_relation_examples("/data/lzh/data/SAOKE/SAOKE_DATA.json")
+# examples = processor.get_relation_examples("data/SAOKE/SAOKE_DATA.json")
 # print("total examples:", len(examples))
 # for example in tqdm(examples):
 #     tokens = tokenizer.tokenize(example.sentence)

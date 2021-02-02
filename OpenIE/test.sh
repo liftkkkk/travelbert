@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Python env interpreter for OIE task
-python="/data1/lzh/miniconda3/envs/python3.6_cuda10.2/bin/python"
+python="miniconda3/envs/python3.6_cuda10.2/bin/python"
 
 # Predicate and entity model
-data_dir="/data1/lzh/data/SAOKE"
-# data_dir="/data1/lzh/data/tourism-OIE"
+data_dir="data/SAOKE"
+# data_dir="data/tourism-OIE"
 output_dir="logs/debug"
 predicate_output_dir=$output_dir/predicate
 entity_output_dir=$output_dir/entity

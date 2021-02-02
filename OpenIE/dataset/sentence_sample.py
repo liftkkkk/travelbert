@@ -5,9 +5,9 @@ import numpy as np
 
 np.random.seed(1234)
 
-file_path = "/data/lzh/data/baike/baike_tourism.json"
-# sample_file_path = "/data/lzh/data/baike/baike_samples10000.txt"
-sample_file_path = "/data/lzh/data/baike/baike_samples50000.txt"
+file_path = "data/baike/baike_tourism.json"
+# sample_file_path = "data/baike/baike_samples10000.txt"
+sample_file_path = "data/baike/baike_samples50000.txt"
 with open(file_path, "r") as file:
     data = json.load(file)
 

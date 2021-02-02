@@ -45,6 +45,6 @@ if __name__ == "__main__":
         json.dump(filtered_examples,f,ensure_ascii=False, indent = 4)
 
 
-# python filter_oie.py --input /data1/lzh/data/tourism-OIE-old/train.json --output /data1/lzh/data/tourism-OIE/train.json
-# python filter_oie.py --input /data1/lzh/data/tourism-OIE-old/dev.json --output /data1/lzh/data/tourism-OIE/dev.json
-# python filter_oie.py --input /data1/lzh/data/tourism-OIE-old/test.json --output /data1/lzh/data/tourism-OIE/test.json
+# python filter_oie.py --input data/tourism-OIE-old/train.json --output data/tourism-OIE/train.json
+# python filter_oie.py --input data/tourism-OIE-old/dev.json --output data/tourism-OIE/dev.json
+# python filter_oie.py --input data/tourism-OIE-old/test.json --output data/tourism-OIE/test.json

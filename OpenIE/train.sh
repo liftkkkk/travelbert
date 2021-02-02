@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Python env interpreter for OIE task
-python="/data1/lzh/miniconda3/envs/python3.6_cuda10.2/bin/python"
+python="miniconda3/envs/python3.6_cuda10.2/bin/python"
 
 # Model config
-bert_ckpt="/data2/penghao/tourism-transformers/pretrain/ckpt/WKLM/ckpt_of_step_8000"  # raw pretrained bert checkpoint
+bert_ckpt="pretrain/ckpt/ckpt_of_step_8000"  # raw pretrained bert checkpoint
 # bert_weight_file=${bert_ckpt}_pytorch.bin  # converted weight for input
-bert_model_dir="/data1/lzh/data/tourism-bert"  # bert model dir with bert_config.json / vocab.txt
+bert_model_dir="data/tourism-bert"  # bert model dir with bert_config.json / vocab.txt
 
 # Dataset
-data_dir="/data1/lzh/data/SAOKE"
-# data_dir="/data1/lzh/data/tourism-OIE"
+data_dir="data/SAOKE"
+# data_dir="data/tourism-OIE"
 
 # Checkpoint dir
 output_dir="logs/debug"

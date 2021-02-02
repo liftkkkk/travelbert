@@ -124,9 +124,9 @@ def parse_zore_result(file_path):
 
 
 def main():
-    # file_path = "/data/lzh/data/baike/relation_wiki.xml"
-    file_path = "/data/lzh/data/baike/relation_baike50000.xml"
-    target_dir_path = "/data/lzh/data/baike"
+    # file_path = "data/baike/relation_wiki.xml"
+    file_path = "data/baike/relation_baike50000.xml"
+    target_dir_path = "data/baike"
 
     all_examples = parse_zore_result(file_path)
 
