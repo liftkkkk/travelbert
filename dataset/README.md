@@ -88,3 +88,6 @@ baidubd_article.txt.clean.txt 全文
 [v20201006-旅游知识图谱8类实体的属性三元组下载](https://cloud.tsinghua.edu.cn/f/ebf73ffec08c4994bffc/?dl=1)
 
 [Crawler and data](../Tourism-KG/baike-spider/)
+
+### 知识图谱三元组
+[knowldge triples describing tourist attractions](https://cloud.tsinghua.edu.cn/f/4a831744700c4f6f9146/?dl=1)

@@ -26,6 +26,9 @@ password: 1iwa
 
 [virtuoso-sparql-api](./Tourism-KG)
 
+[knowledge triples download](./dataset#知识图谱三元组)
+
 ## Updating
+2021-05-16, Release Code and datasets
 2021-02-02, Release Code and datasets
 
